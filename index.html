@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="dark">
+<title>Kinematic Typography</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@700&family=Playfair+Display:ital@1&family=Recursive:CASL,CRSV,MONO,slnt,wght@0..1,0..1,0..1,-15..0,300..1000&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: #0a0a0a; }
+body { cursor: crosshair; -webkit-font-smoothing: antialiased; }
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.5) 100%);
+  pointer-events: none;
+  z-index: 100;
+}
+#fx {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+#content {
+  position: relative;
+  z-index: 2;
+  padding: 50px 70px;
+  height: 100vh;
+}
+.hdr-k {
+  font-family: 'Oswald', sans-serif;
+  font-weight: 700;
+  font-size: clamp(50px, 7vw, 88px);
+  color: #d4d4d4;
+  line-height: 0.95;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+}
+.hdr-t {
+  font-family: 'Recursive', sans-serif;
+  font-size: clamp(50px, 7vw, 88px);
+  color: #ff6b35;
+  line-height: 0.95;
+  letter-spacing: 1px;
+  font-variation-settings: 'MONO' 0, 'CASL' 1, 'wght' 800, 'slnt' -12, 'CRSV' 1;
+}
+.subtitle {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-size: 13px;
+  color: #555;
+  margin-top: 14px;
+  letter-spacing: 2px;
+}
+#columns {
+  position: relative;
+  margin-top: 40px;
+  width: 100%;
+  height: calc(100vh - 280px);
+  overflow: hidden;
+}
+.word {
+  position: absolute;
+  font-family: 'Recursive', sans-serif;
+  font-size: 20px;
+  line-height: 1;
+  color: #777;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+  will-change: transform;
+  font-variation-settings: 'MONO' 0, 'CASL' 0, 'wght' 400, 'slnt' 0, 'CRSV' 0;
+}
+.word.vis { opacity: 1; }
+.credit {
+  position: fixed;
+  bottom: 24px;
+  right: 36px;
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-size: 11px;
+  color: #444;
+  z-index: 10;
+  letter-spacing: 1px;
+}
+.credit span { color: #ff6b35; }
+</style>
+</head>
+<body>
+<canvas id="fx"></canvas>
+<div id="content">
+  <h1 class="hdr-k" id="hdr-k">KINEMATIC</h1>
+  <h1 class="hdr-t" id="hdr-t">TYPOGRAPHY</h1>
+  <p class="subtitle">Vol. 01 // Interactive Force Fields</p>
+  <div id="columns"></div>
+</div>
+<div class="credit">&mdash;&mdash; <span>&lt;/PRETEXT&gt;</span></div>
+
+<script type="module">
+import { prepareWithSegments, layoutWithLines } from 'https://esm.sh/@chenglou/pretext@0.0.3';
+
+// ── Load fonts ──────────────────────────────────────────────────────────────
+await Promise.all([
+  document.fonts.load('700 80px Oswald'),
+  document.fonts.load('400 20px Recursive'),
+  document.fonts.load('italic 13px "Playfair Display"'),
+]);
+
+// ── Configuration ───────────────────────────────────────────────────────────
+const FONT_SIZE  = 20;
+const LH         = 32;
+const FONT       = `${FONT_SIZE}px Recursive`;
+const COLS       = 3;
+const GAP        = 48;
+const REP_R      = 220;    // repulsion radius (px)
+const SPRING     = 0.03;   // spring stiffness
+const DAMP       = 0.88;   // velocity damping
+const MAX_DISP   = 250;    // max displacement clamp
+
+// ── Text content ────────────────────────────────────────────────────────────
+const TEXTS = [
+  `The intersection of dynamic rendering and physics-based typography opens new paradigms for digital interaction. In this concept demonstration, an ethereal kinematic force field serves as a living canvas. As the cursor navigates the viewport, its presence driven by inverse kinematics displaces the surrounding typographic elements in real-time. Each word functions as an independent physical body bound by spring constraints, reacting to proximity through calculated distance fields. The resulting visual is enhanced by bloom compositing to simulate pure energy.`,
+
+  `Variable font technology transforms typography from a static medium into a living responsive material. The five axes of Recursive, monospace, casual, weight, slant and cursive, shift as the force field approaches each word. Near the cursor, letterforms grow bolder and more expressive. Away from it they return to their quiet upright default. This creates a ripple of transformation that follows your movement as if the text itself is breathing. Pretext, the layout engine beneath, measures every word with sub-pixel accuracy using pure arithmetic.`,
+
+  `The visual aesthetic draws from brutalist and minimalist design principles, combined with cyberpunk neon. The dark background and subtle text provide a canvas for the vibrant glowing force field to stand out, creating contrast. This project explores what becomes possible when physics, typography, and interactive design converge. It challenges the notion of a web page as a static document, offering a glimpse into a future where content is alive. Move your cursor across these words and watch them react, transform, and dance.`,
+];
+
+// ── Canvas setup ────────────────────────────────────────────────────────────
+const cvs = document.getElementById('fx');
+const ctx = cvs.getContext('2d');
+function resize() { cvs.width = innerWidth; cvs.height = innerHeight; }
+resize();
+addEventListener('resize', resize);
+
+// ── Mouse state ─────────────────────────────────────────────────────────────
+const mouse = { x: -999, y: -999, px: -999, py: -999 };
+addEventListener('mousemove', e => {
+  mouse.px = mouse.x; mouse.py = mouse.y;
+  mouse.x = e.clientX; mouse.y = e.clientY;
+});
+addEventListener('touchmove', e => {
+  const t = e.touches[0];
+  mouse.px = mouse.x; mouse.py = mouse.y;
+  mouse.x = t.clientX; mouse.y = t.clientY;
+}, { passive: true });
+
+// ── Pretext measurement ─────────────────────────────────────────────────────
+const mwCache = new Map();
+
+function mw(word) {
+  let w = mwCache.get(word);
+  if (w !== undefined) return w;
+  const p = prepareWithSegments(word, FONT);
+  const { lines } = layoutWithLines(p, 99999, LH);
+  w = lines[0]?.width ?? 0;
+  mwCache.set(word, w);
+  return w;
+}
+
+function breakLines(text, maxW) {
+  const p = prepareWithSegments(text, FONT);
+  return layoutWithLines(p, maxW, LH);
+}
+
+// ── Layout words ────────────────────────────────────────────────────────────
+const colsEl  = document.getElementById('columns');
+const padX    = 70;
+const availW  = innerWidth - padX * 2;
+const colW    = (availW - GAP * (COLS - 1)) / COLS;
+const spW     = mw('a b') - mw('a') - mw('b');
+const words   = [];
+
+for (let c = 0; c < COLS; c++) {
+  const { lines } = breakLines(TEXTS[c], colW);
+  const colX = c * (colW + GAP);
+
+  for (let li = 0; li < lines.length; li++) {
+    const lineWords = lines[li].text.trim().split(/\s+/).filter(Boolean);
+    if (!lineWords.length) continue;
+
+    // Justified spacing (except last line)
+    const totalWW = lineWords.reduce((s, w) => s + mw(w), 0);
+    const sp = (li < lines.length - 1 && lineWords.length > 1)
+      ? (colW - totalWW) / (lineWords.length - 1)
+      : spW;
+
+    let xOff = 0;
+    for (const w of lineWords) {
+      const ww  = mw(w);
+      const bx  = colX + xOff;
+      const by  = li * LH;
+
+      const el = document.createElement('span');
+      el.className = 'word';
+      el.textContent = w;
+      el.style.left = bx + 'px';
+      el.style.top  = by + 'px';
+      colsEl.appendChild(el);
+
+      words.push({
+        el, w: ww, bx, by,
+        x: bx, y: by,
+        vx: 0, vy: 0,
+        mono: 0, casl: 0, wght: 400, slnt: 0, crsv: 0,
+        prox: 0,
+      });
+      xOff += ww + sp;
+    }
+  }
+}
+
+// Staggered entrance
+words.forEach((w, i) => {
+  setTimeout(() => w.el.classList.add('vis'), 200 + i * 6);
+});
+
+// ── Particle systems ────────────────────────────────────────────────────────
+const trail   = [];
+const ambient = [];
+const MAX_TRAIL = 350;
+
+for (let i = 0; i < 60; i++) {
+  ambient.push({
+    x: Math.random() * innerWidth,
+    y: Math.random() * innerHeight,
+    vx: (Math.random() - 0.5) * 0.3,
+    vy: (Math.random() - 0.5) * 0.2 - 0.08,
+    size: Math.random() * 1.5 + 0.5,
+    alpha: Math.random() * 0.1 + 0.02,
+  });
+}
+
+function emitTrail() {
+  if (mouse.x < 0) return;
+  const vx = mouse.x - mouse.px;
+  const vy = mouse.y - mouse.py;
+  const speed = Math.sqrt(vx * vx + vy * vy);
+  const count = Math.min(Math.floor(speed * 0.4) + 2, 8);
+
+  for (let i = 0; i < count; i++) {
+    if (trail.length >= MAX_TRAIL) trail.shift();
+    trail.push({
+      x: mouse.x + (Math.random() - 0.5) * 10,
+      y: mouse.y + (Math.random() - 0.5) * 10,
+      vx: vx * 0.15 + (Math.random() - 0.5) * 3,
+      vy: vy * 0.15 + (Math.random() - 0.5) * 3,
+      life: 1,
+      size: Math.random() * 2.5 + 0.8,
+    });
+  }
+}
+
+// ── Container offset (cached) ───────────────────────────────────────────────
+let cLeft, cTop;
+function updateColsRect() {
+  const r = colsEl.getBoundingClientRect();
+  cLeft = r.left;
+  cTop  = r.top;
+}
+updateColsRect();
+addEventListener('resize', updateColsRect);
+
+// ── Header refs ─────────────────────────────────────────────────────────────
+const hdrK = document.getElementById('hdr-k');
+const hdrT = document.getElementById('hdr-t');
+let hdrTime = 0;
+
+// ── Animation loop ──────────────────────────────────────────────────────────
+function tick() {
+  ctx.clearRect(0, 0, cvs.width, cvs.height);
+
+  // ── Ambient particles ───────────────────────
+  for (const p of ambient) {
+    p.x += p.vx;
+    p.y += p.vy;
+    if (p.x < -20) p.x = innerWidth + 20;
+    if (p.x > innerWidth + 20) p.x = -20;
+    if (p.y < -20) p.y = innerHeight + 20;
+    if (p.y > innerHeight + 20) p.y = -20;
+
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255,107,53,${p.alpha})`;
+    ctx.fill();
+  }
+
+  // ── Trail particles ─────────────────────────
+  emitTrail();
+  for (let i = trail.length - 1; i >= 0; i--) {
+    const p = trail[i];
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vx *= 0.97;
+    p.vy *= 0.97;
+    p.vy += 0.02;
+    p.life -= 0.016;
+
+    if (p.life <= 0) { trail.splice(i, 1); continue; }
+
+    const a = p.life;
+    // Core
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size * a, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255,107,53,${(a * 0.55).toFixed(3)})`;
+    ctx.fill();
+    // Glow
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size * a * 4, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255,107,53,${(a * 0.07).toFixed(3)})`;
+    ctx.fill();
+  }
+
+  // ── Cursor glow ─────────────────────────────
+  if (mouse.x > 0) {
+    const g = ctx.createRadialGradient(mouse.x, mouse.y, 0, mouse.x, mouse.y, REP_R);
+    g.addColorStop(0, 'rgba(255,107,53,0.18)');
+    g.addColorStop(0.4, 'rgba(255,107,53,0.06)');
+    g.addColorStop(1, 'rgba(255,107,53,0)');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(mouse.x, mouse.y, REP_R, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Bright center dot
+    ctx.beginPath();
+    ctx.arc(mouse.x, mouse.y, 3, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255,150,90,0.7)';
+    ctx.fill();
+  }
+
+  // ── Word physics ────────────────────────────
+  for (const word of words) {
+    const wcx = cLeft + word.x + word.w / 2;
+    const wcy = cTop + word.y + LH / 2;
+    const dx  = wcx - mouse.x;
+    const dy  = wcy - mouse.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+
+    // Repulsion (smooth quadratic falloff)
+    if (dist < REP_R && dist > 1) {
+      const t = 1 - dist / REP_R;
+      const f = 18 * t * t;
+      word.vx += (dx / dist) * f;
+      word.vy += (dy / dist) * f;
+    }
+
+    // Spring back
+    word.vx += (word.bx - word.x) * SPRING;
+    word.vy += (word.by - word.y) * SPRING;
+
+    // Damping
+    word.vx *= DAMP;
+    word.vy *= DAMP;
+
+    // Integrate
+    word.x += word.vx;
+    word.y += word.vy;
+
+    // Clamp displacement
+    const ddx  = word.x - word.bx;
+    const ddy  = word.y - word.by;
+    const disp = Math.sqrt(ddx * ddx + ddy * ddy);
+    if (disp > MAX_DISP) {
+      const s = MAX_DISP / disp;
+      word.x = word.bx + ddx * s;
+      word.y = word.by + ddy * s;
+      word.vx *= 0.5;
+      word.vy *= 0.5;
+    }
+
+    // Proximity 0–1
+    const prox = Math.max(0, 1 - dist / REP_R);
+
+    // Font variation targets — push axes HARD for dramatic effect
+    const tMono = prox;
+    const tCasl = prox;
+    const tWght = 300 + prox * 700;  // 300 → 1000 (full range)
+    const tSlnt = -prox * 15;
+    const tCrsv = prox;
+
+    // Smooth interpolation (faster response for snappier feel)
+    word.mono += (tMono - word.mono) * 0.12;
+    word.casl += (tCasl - word.casl) * 0.12;
+    word.wght += (tWght - word.wght) * 0.12;
+    word.slnt += (tSlnt - word.slnt) * 0.12;
+    word.crsv += (tCrsv - word.crsv) * 0.12;
+
+    // Transform
+    const tx  = word.x - word.bx;
+    const ty  = word.y - word.by;
+    const rot = disp > 2 ? Math.atan2(ty, tx) * (Math.min(disp, 80) / 80) * 4 : 0;
+    const sc  = 1 + prox * 0.18;  // up to 18% scale boost
+    word.el.style.transform =
+      `translate(${tx.toFixed(1)}px,${ty.toFixed(1)}px) rotate(${rot.toFixed(2)}deg) scale(${sc.toFixed(3)})`;
+
+    // Update expensive style props only when proximity changed
+    if (Math.abs(prox - word.prox) > 0.004 || prox > 0.01) {
+      word.el.style.fontVariationSettings =
+        `'MONO' ${word.mono.toFixed(2)},'CASL' ${word.casl.toFixed(2)},'wght' ${Math.round(word.wght)},'slnt' ${word.slnt.toFixed(1)},'CRSV' ${word.crsv.toFixed(2)}`;
+
+      // Color: #777 → #ff6b35
+      const r = Math.round(119 + prox * (255 - 119));
+      const g = Math.round(119 + prox * (107 - 119));
+      const b = Math.round(119 + prox * (53 - 119));
+      word.el.style.color = `rgb(${r},${g},${b})`;
+
+      // Glow — multi-layer for intense bloom
+      if (prox > 0.1) {
+        const ga = (prox - 0.1) / 0.9;
+        word.el.style.textShadow =
+          `0 0 ${(4 + prox * 12).toFixed(0)}px rgba(255,107,53,${(ga * 0.7).toFixed(2)}), 0 0 ${(10 + prox * 30).toFixed(0)}px rgba(255,107,53,${(ga * 0.3).toFixed(2)}), 0 0 ${(20 + prox * 50).toFixed(0)}px rgba(255,60,20,${(ga * 0.12).toFixed(2)})`;
+      } else if (word.prox > 0.1) {
+        word.el.style.textShadow = 'none';
+      }
+
+      word.prox = prox;
+    }
+  }
+
+  // ── Header animation ───────────────────────
+  hdrTime += 0.015;
+
+  // "KINEMATIC" — subtle horizontal breathing
+  const kSc = 1 + Math.sin(hdrTime * 0.4) * 0.003;
+  hdrK.style.transform = `scaleX(${kSc.toFixed(4)})`;
+
+  // "TYPOGRAPHY" — variable font axes breathe
+  const hCasl = 0.7 + Math.sin(hdrTime * 0.7) * 0.3;
+  const hWght = 750  + Math.sin(hdrTime * 0.5) * 150;
+  const hSlnt = -10  + Math.sin(hdrTime * 0.3) * 5;
+  const hMono = 0.1 + Math.sin(hdrTime * 0.9) * 0.1;
+  hdrT.style.fontVariationSettings =
+    `'MONO' ${hMono.toFixed(3)},'CASL' ${hCasl.toFixed(3)},'wght' ${Math.round(hWght)},'slnt' ${hSlnt.toFixed(1)},'CRSV' 1`;
+
+  requestAnimationFrame(tick);
+}
+
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>

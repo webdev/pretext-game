@@ -4,444 +4,964 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="color-scheme" content="dark">
-<title>Kinematic Typography</title>
+<title>GLYPH</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@700&family=Playfair+Display:ital@1&family=Recursive:CASL,CRSV,MONO,slnt,wght@0..1,0..1,0..1,-15..0,300..1000&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@700&family=Playfair+Display:ital@0;1&family=Recursive:CASL,CRSV,MONO,slnt,wght@0..1,0..1,0..1,-15..0,300..1000&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-html, body { width: 100%; height: 100%; overflow: hidden; background: #0a0a0a; }
-body { cursor: crosshair; -webkit-font-smoothing: antialiased; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: #060608; }
+body { -webkit-font-smoothing: antialiased; }
 body::after {
   content: '';
   position: fixed;
   inset: 0;
-  background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.5) 100%);
+  background: radial-gradient(ellipse at center, transparent 35%, rgba(0,0,0,0.65) 100%);
   pointer-events: none;
   z-index: 100;
 }
-#fx {
-  position: fixed;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-}
-#content {
-  position: relative;
-  z-index: 2;
-  padding: 50px 70px;
-  height: 100vh;
-}
-.hdr-k {
-  font-family: 'Oswald', sans-serif;
-  font-weight: 700;
-  font-size: clamp(50px, 7vw, 88px);
-  color: #d4d4d4;
-  line-height: 0.95;
-  letter-spacing: 4px;
-  text-transform: uppercase;
-}
-.hdr-t {
-  font-family: 'Recursive', sans-serif;
-  font-size: clamp(50px, 7vw, 88px);
-  color: #ff6b35;
-  line-height: 0.95;
-  letter-spacing: 1px;
-  font-variation-settings: 'MONO' 0, 'CASL' 1, 'wght' 800, 'slnt' -12, 'CRSV' 1;
-}
-.subtitle {
-  font-family: 'Playfair Display', serif;
-  font-style: italic;
-  font-size: 13px;
-  color: #555;
-  margin-top: 14px;
-  letter-spacing: 2px;
-}
-#columns {
-  position: relative;
-  margin-top: 40px;
-  width: 100%;
-  height: calc(100vh - 280px);
-  overflow: hidden;
-}
-.word {
+#fx { position: fixed; inset: 0; z-index: 1; pointer-events: none; }
+#world { position: fixed; inset: 0; z-index: 2; pointer-events: none; overflow: hidden; }
+.gw {
   position: absolute;
   font-family: 'Recursive', sans-serif;
-  font-size: 20px;
+  font-size: 22px;
   line-height: 1;
-  color: #777;
+  color: #2a2a2a;
   white-space: nowrap;
   pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.6s ease;
   will-change: transform;
-  font-variation-settings: 'MONO' 0, 'CASL' 0, 'wght' 400, 'slnt' 0, 'CRSV' 0;
+  font-variation-settings: 'MONO' 0, 'CASL' 0, 'wght' 300, 'slnt' 0, 'CRSV' 0;
 }
-.word.vis { opacity: 1; }
-.credit {
+.gw.amb { font-size: 15px; color: #1a1a1a; }
+.col {
+  position: absolute;
+  font-family: 'Recursive', sans-serif;
+  line-height: 1;
+  white-space: nowrap;
+  pointer-events: none;
+  will-change: transform;
+  opacity: .85;
+}
+#hud {
   position: fixed;
-  bottom: 24px;
-  right: 36px;
+  top: 28px; right: 40px;
+  z-index: 80;
+  pointer-events: none;
+  text-align: right;
+  opacity: 0;
+  transition: opacity 1s ease;
+}
+#hud.show { opacity: 1; }
+.score-label {
   font-family: 'Playfair Display', serif;
   font-style: italic;
   font-size: 11px;
-  color: #444;
-  z-index: 10;
+  color: #555;
+  letter-spacing: 3px;
+  margin-bottom: 2px;
+}
+.score-val {
+  font-family: 'Oswald', sans-serif;
+  font-weight: 700;
+  font-size: 42px;
+  color: #ffc832;
+  letter-spacing: 3px;
+  text-shadow: 0 0 12px rgba(255,200,50,.3), 0 0 30px rgba(255,200,50,.1);
+  transition: transform .12s ease;
+  transform-origin: right center;
+}
+.score-val.bump { transform: scale(1.35); }
+#title-overlay {
+  position: fixed; inset: 0; z-index: 50;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: #060608;
+  transition: opacity 1.2s ease;
+}
+#title-overlay.out { opacity: 0; pointer-events: none; }
+.t-glyph {
+  font-family: 'Oswald', sans-serif;
+  font-weight: 700; font-size: 140px;
+  color: #ff6b35; letter-spacing: 16px;
+}
+.t-sub {
+  font-family: 'Recursive', sans-serif;
+  font-size: 18px; color: #555; margin-top: 16px;
+  font-variation-settings: 'MONO' 0, 'CASL' 0.5, 'wght' 400, 'slnt' 0, 'CRSV' 0;
+}
+.t-prompt {
+  font-family: 'Playfair Display', serif;
+  font-style: italic; font-size: 14px; color: #444;
+  margin-top: 40px; letter-spacing: 2px;
+  animation: pulse 2s ease-in-out infinite;
+}
+.t-howto {
+  margin-top: 48px;
+  display: flex; gap: 40px;
+  align-items: center;
+}
+.t-howto-item {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+}
+.t-keys {
+  display: flex; gap: 5px;
+}
+.t-key {
+  font-family: 'Recursive', sans-serif;
+  font-variation-settings: 'MONO' 1, 'CASL' 0, 'wght' 500, 'slnt' 0, 'CRSV' 0;
+  font-size: 13px; color: #666;
+  border: 1px solid #2a2a2a; border-radius: 4px;
+  padding: 4px 9px;
+  background: rgba(255,255,255,.02);
+  line-height: 1;
+}
+.t-key-label {
+  font-family: 'Playfair Display', serif;
+  font-style: italic; font-size: 11px; color: #444;
   letter-spacing: 1px;
 }
-.credit span { color: #ff6b35; }
+@keyframes pulse { 0%,100%{opacity:.35} 50%{opacity:1} }
+#end-overlay {
+  position: fixed; inset: 0; z-index: 50;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none;
+  background: rgba(6,6,8,0);
+  transition: opacity 3s ease, background 3s ease;
+}
+#end-overlay.show { opacity: 1; background: rgba(6,6,8,0.88); }
+.end-story {
+  font-family: 'Playfair Display', serif;
+  font-style: italic; font-size: 22px; color: #bbb;
+  max-width: 620px; text-align: center; line-height: 1.9;
+}
+.end-label {
+  font-family: 'Oswald', sans-serif;
+  font-weight: 700; font-size: 52px;
+  color: #ff6b35; margin-top: 50px; letter-spacing: 8px;
+}
+.passage-line {
+  position: absolute;
+  font-family: 'Recursive', sans-serif;
+  font-size: 15px;
+  line-height: 1;
+  color: #222;
+  white-space: pre;
+  pointer-events: none;
+  will-change: transform;
+  font-variation-settings: 'MONO' 0, 'CASL' 0, 'wght' 350, 'slnt' 0, 'CRSV' 0;
+}
+.passage-edge {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+  will-change: transform;
+}
+#player-glyph {
+  position: absolute;
+  font-family: 'Recursive', sans-serif;
+  font-size: 38px;
+  line-height: 1;
+  color: #ff6b35;
+  pointer-events: none;
+  will-change: transform;
+  white-space: nowrap;
+  z-index: 10;
+}
 </style>
 </head>
 <body>
 <canvas id="fx"></canvas>
-<div id="content">
-  <h1 class="hdr-k" id="hdr-k">KINEMATIC</h1>
-  <h1 class="hdr-t" id="hdr-t">TYPOGRAPHY</h1>
-  <p class="subtitle">Vol. 01 // Interactive Force Fields</p>
-  <div id="columns"></div>
+<div id="world"></div>
+
+<div id="hud">
+  <div class="score-label">SCORE</div>
+  <div class="score-val" id="score">0</div>
 </div>
-<div class="credit">&mdash;&mdash; <span>&lt;/PRETEXT&gt;</span></div>
+
+<div id="title-overlay">
+  <div class="t-glyph">GLYPH</div>
+  <div class="t-sub" id="t-sub">a typographic platformer</div>
+  <div class="t-prompt">press any key to begin</div>
+  <div class="t-howto">
+    <div class="t-howto-item">
+      <div class="t-keys"><span class="t-key">←</span><span class="t-key">→</span></div>
+      <div class="t-key-label">move</div>
+    </div>
+    <div class="t-howto-item">
+      <div class="t-keys"><span class="t-key">↑</span><span class="t-key">Space</span></div>
+      <div class="t-key-label">jump</div>
+    </div>
+    <div class="t-howto-item">
+      <div class="t-keys"><span class="t-key">2x</span></div>
+      <div class="t-key-label">double jump</div>
+    </div>
+  </div>
+</div>
+
+<div id="end-overlay">
+  <div class="end-story" id="end-story"></div>
+  <div class="end-label">GLYPH</div>
+</div>
 
 <script type="module">
 import { prepareWithSegments, layoutWithLines } from 'https://esm.sh/@chenglou/pretext@0.0.3';
 
-// ── Load fonts ──────────────────────────────────────────────────────────────
 await Promise.all([
-  document.fonts.load('700 80px Oswald'),
-  document.fonts.load('400 20px Recursive'),
-  document.fonts.load('italic 13px "Playfair Display"'),
+  document.fonts.load('700 140px Oswald'),
+  document.fonts.load('400 22px Recursive'),
+  document.fonts.load('italic 22px "Playfair Display"'),
 ]);
 
-// ── Configuration ───────────────────────────────────────────────────────────
-const FONT_SIZE  = 20;
-const LH         = 32;
-const FONT       = `${FONT_SIZE}px Recursive`;
-const COLS       = 3;
-const GAP        = 48;
-const REP_R      = 220;    // repulsion radius (px)
-const SPRING     = 0.03;   // spring stiffness
-const DAMP       = 0.88;   // velocity damping
-const MAX_DISP   = 250;    // max displacement clamp
+// ── Config ──────────────────────────────────────────
+const G        = 0.5;
+const JUMP     = -12.5;
+const SPD      = 4.8;
+const MAXFALL  = 12;
+const AURA     = 320;
+const PW       = 8;
+const PH       = 34;
+const PLATH    = 28;
+const MAXJUMPS = 2;
+const FONT     = '22px Recursive';
+const FONT_A   = '15px Recursive';
 
-// ── Text content ────────────────────────────────────────────────────────────
-const TEXTS = [
-  `The intersection of dynamic rendering and physics-based typography opens new paradigms for digital interaction. In this concept demonstration, an ethereal kinematic force field serves as a living canvas. As the cursor navigates the viewport, its presence driven by inverse kinematics displaces the surrounding typographic elements in real-time. Each word functions as an independent physical body bound by spring constraints, reacting to proximity through calculated distance fields. The resulting visual is enhanced by bloom compositing to simulate pure energy.`,
+// ── Collectible Glyphs ─────────────────────────────
+const GCHARS = [
+  // Letters that look amazing in Recursive with swash/casual axes
+  'A','B','C','G','K','Q','R','S','W','Z','M','N','X',
+  'a','b','g','k','y','f','j','z','e','r','s','w',
+  '&','@','$','%','#',
+  // Stars & sparkles
+  '★','☆','✦','✧','✶','✷','✸','✹','✺','✻','✼','✽','✾','✿','❀','❁','❂','❃','❇','❈','❉','❊','❋',
+  // Geometric
+  '◆','◇','◈','●','○','◉','◎','▲','△','▼','▽','■','□','◐','◑','▣',
+  // Symbols & dingbats
+  '♠','♣','♥','♦','⚡','☀','☁','☄','♾','⚙','⚛','☸','✠','✡','✢','✣','✤','✥',
+  // Musical
+  '♩','♪','♫','♬',
+  // Math & greek
+  '∞','Ω','π','∆','∑','√','∂','∫',
+  // Arrows & pointers
+  '➜','➤','↻','↺','⟐','⟡',
+  // Decorative
+  '❦','❧','☙','ꙮ',
+];
+const GCOLS  = [
+  {r:255,g:200,b:50},  // gold
+  {r:80,g:220,b:255},  // cyan
+  {r:255,g:90,b:200},  // magenta
+  {r:130,g:255,b:90},  // lime
+  {r:255,g:140,b:60},  // warm orange
+  {r:200,g:120,b:255}, // violet
+];
+const GFEATS = ['ss01','ss02','ss03','ss04','ss05','dlig'];
 
-  `Variable font technology transforms typography from a static medium into a living responsive material. The five axes of Recursive, monospace, casual, weight, slant and cursive, shift as the force field approaches each word. Near the cursor, letterforms grow bolder and more expressive. Away from it they return to their quiet upright default. This creates a ripple of transformation that follows your movement as if the text itself is breathing. Pretext, the layout engine beneath, measures every word with sub-pixel accuracy using pure arithmetic.`,
-
-  `The visual aesthetic draws from brutalist and minimalist design principles, combined with cyberpunk neon. The dark background and subtle text provide a canvas for the vibrant glowing force field to stand out, creating contrast. This project explores what becomes possible when physics, typography, and interactive design converge. It challenges the notion of a web page as a static document, offering a glimpse into a future where content is alive. Move your cursor across these words and watch them react, transform, and dance.`,
+// ── Level ───────────────────────────────────────────
+const P = [
+  // 1 — Awakening
+  {t:"The",x:200,y:520},{t:"story",x:390,y:500},{t:"begins",x:590,y:510},
+  {t:"with",x:800,y:535},{t:"a",x:960,y:510},{t:"single",x:1040,y:485},
+  {t:"step",x:1230,y:510},{t:"into",x:1430,y:545},{t:"the",x:1590,y:525},
+  {t:"dark",x:1720,y:505},
+  // 2 — Discovery
+  {t:"Words",x:1950,y:515},{t:"float",x:2140,y:470},{t:"silently",x:2310,y:435},
+  {t:"waiting",x:2540,y:470},{t:"to",x:2730,y:505},{t:"be",x:2830,y:525},
+  {t:"found",x:2940,y:480},{t:"Each",x:3120,y:510},{t:"one",x:3260,y:540},
+  {t:"carries",x:3380,y:505},
+  // 3 — Truth
+  {t:"a",x:3580,y:525},{t:"piece",x:3660,y:490},{t:"of",x:3820,y:515},
+  {t:"the",x:3920,y:480},{t:"truth",x:4040,y:445},
+  // 4 — Transformation
+  {t:"As",x:4280,y:500},{t:"you",x:4400,y:525},{t:"move",x:4530,y:495},
+  {t:"through",x:4680,y:460},{t:"them",x:4870,y:495},
+  {t:"they",x:5070,y:530},{t:"wake",x:5210,y:485},{t:"They",x:5380,y:440},
+  {t:"glow",x:5530,y:405},{t:"They",x:5700,y:440},{t:"remember",x:5850,y:480},
+  // 5 — Revelation
+  {t:"The",x:6100,y:515},{t:"path",x:6230,y:480},{t:"was",x:6380,y:505},
+  {t:"always",x:6500,y:470},{t:"here",x:6680,y:505},{t:"hidden",x:6810,y:460},
+  {t:"in",x:6990,y:495},{t:"the",x:7090,y:515},{t:"typography",x:7210,y:475},
+  // 6 — Dance
+  {t:"Now",x:7500,y:515},{t:"the",x:7620,y:490},{t:"words",x:7730,y:465},
+  {t:"dance",x:7890,y:490},{t:"beneath",x:8050,y:515},{t:"your",x:8240,y:490},
+  {t:"feet",x:8380,y:515},
+  // 7 — Finale
+  {t:"and",x:8580,y:495},{t:"the",x:8700,y:505},{t:"story",x:8810,y:480},
+  {t:"writes",x:8970,y:505},{t:"itself",x:9140,y:480},
+  {t:"You",x:9400,y:505},{t:"are",x:9530,y:490},{t:"the",x:9650,y:505},
+  {t:"cursor",x:9770,y:480},
 ];
 
-// ── Canvas setup ────────────────────────────────────────────────────────────
+const AMB = [
+  {t:"memory",x:450,y:280},{t:"light",x:1150,y:210},{t:"echo",x:1750,y:180},
+  {t:"dream",x:2450,y:260},{t:"whisper",x:3150,y:190},{t:"time",x:3750,y:300},
+  {t:"shadow",x:4350,y:230},{t:"breath",x:4950,y:185},{t:"pulse",x:5550,y:270},
+  {t:"flow",x:6150,y:210},{t:"spark",x:6750,y:295},{t:"wave",x:7350,y:175},
+  {t:"drift",x:7950,y:250},{t:"ember",x:8550,y:195},{t:"haze",x:9150,y:275},
+];
+
+const STORY = "The story begins with a single step into the dark. Words float silently, waiting to be found. Each one carries a piece of the truth. As you move through them, they wake. They glow. They remember. The path was always here, hidden in the typography. Now the words dance beneath your feet, and the story writes itself. You are the cursor.";
+
+// ── Canvas ──────────────────────────────────────────
 const cvs = document.getElementById('fx');
 const ctx = cvs.getContext('2d');
-function resize() { cvs.width = innerWidth; cvs.height = innerHeight; }
-resize();
-addEventListener('resize', resize);
+function rsz() { cvs.width = innerWidth; cvs.height = innerHeight; }
+rsz(); addEventListener('resize', rsz);
+const W = () => innerWidth, H = () => innerHeight;
 
-// ── Mouse state ─────────────────────────────────────────────────────────────
-const mouse = { x: -999, y: -999, px: -999, py: -999 };
-addEventListener('mousemove', e => {
-  mouse.px = mouse.x; mouse.py = mouse.y;
-  mouse.x = e.clientX; mouse.y = e.clientY;
+// ── Pretext ─────────────────────────────────────────
+const mc = new Map();
+function mw(t, f) {
+  const k = t + '|' + f;
+  let v = mc.get(k);
+  if (v !== undefined) return v;
+  const p = prepareWithSegments(t, f);
+  const { lines } = layoutWithLines(p, 99999, 30);
+  v = lines[0]?.width ?? 0;
+  mc.set(k, v);
+  return v;
+}
+
+// ── Word Elements ───────────────────────────────────
+const worldEl = document.getElementById('world');
+
+const words = P.map(p => {
+  const el = document.createElement('span');
+  el.className = 'gw';
+  el.textContent = p.t;
+  worldEl.appendChild(el);
+  return { ...p, el, w: mw(p.t, FONT), plat: true, act: false, al: 0,
+    mono:0, casl:0, wght:300, slnt:0, crsv:0 };
 });
-addEventListener('touchmove', e => {
-  const t = e.touches[0];
-  mouse.px = mouse.x; mouse.py = mouse.y;
-  mouse.x = t.clientX; mouse.y = t.clientY;
-}, { passive: true });
 
-// ── Pretext measurement ─────────────────────────────────────────────────────
-const mwCache = new Map();
+const ambWords = AMB.map(a => {
+  const el = document.createElement('span');
+  el.className = 'gw amb';
+  el.textContent = a.t;
+  worldEl.appendChild(el);
+  return { ...a, el, w: mw(a.t, FONT_A), baseY: a.y, plat: false, act: false, al: 0,
+    mono:0, casl:0, wght:300, slnt:0, crsv:0, ph: Math.random()*Math.PI*2 };
+});
 
-function mw(word) {
-  let w = mwCache.get(word);
-  if (w !== undefined) return w;
-  const p = prepareWithSegments(word, FONT);
-  const { lines } = layoutWithLines(p, 99999, LH);
-  w = lines[0]?.width ?? 0;
-  mwCache.set(word, w);
-  return w;
-}
+const allW = [...words, ...ambWords];
 
-function breakLines(text, maxW) {
-  const p = prepareWithSegments(text, FONT);
-  return layoutWithLines(p, maxW, LH);
-}
+const plEl = document.createElement('div');
+plEl.id = 'player-glyph';
+plEl.textContent = '&';
+worldEl.appendChild(plEl);
 
-// ── Layout words ────────────────────────────────────────────────────────────
-const colsEl  = document.getElementById('columns');
-const padX    = 70;
-const availW  = innerWidth - padX * 2;
-const colW    = (availW - GAP * (COLS - 1)) / COLS;
-const spW     = mw('a b') - mw('a') - mw('b');
-const words   = [];
+// ── Reflow Passages (showcasing pretext line breaking) ──
+const PASSAGES = [
+  { text: "Good typography is invisible. Bad typography is everywhere. The reader should never notice the type, only the quiet rhythm it carries forward through time.", x: 1400, y: 160, maxW: 400 },
+  { text: "The space between words, the flow of sentences, the rhythm of paragraphs — these are the invisible architectures of human thought made visible on the page.", x: 4100, y: 130, maxW: 380 },
+  { text: "Every letter is a small machine. Every word a mechanism. Together they become the visible form of language, carrying meaning across the silence between us.", x: 7100, y: 150, maxW: 390 },
+];
+const PFONT = '15px Recursive';
+const PLH = 22;
+const passages = PASSAGES.map(p => {
+  const prepared = prepareWithSegments(p.text, PFONT);
+  const edge = document.createElement('div');
+  edge.className = 'passage-edge';
+  worldEl.appendChild(edge);
+  return { ...p, prepared, edge, currentW: p.maxW, lastW: 0, lineEls: [], cachedLines: [] };
+});
 
-for (let c = 0; c < COLS; c++) {
-  const { lines } = breakLines(TEXTS[c], colW);
-  const colX = c * (colW + GAP);
+// ── State ───────────────────────────────────────────
+let state = 'title';
+const cam = { x: 0, y: 0 };
+const pl = {
+  x: 210, y: 450, vx: 0, vy: 0,
+  ground: false, coyote: 0, jbuf: 0, jcount: 0,
+  lastPlat: null, trail: [], boost: 0,
+};
+let gt = 0, tt = 0, ended = false;
+let score = 0, dScore = 0;
+const scoreEl = document.getElementById('score');
+const hudEl = document.getElementById('hud');
+const glyphs = [];
+let glyphTimer = 0;
 
-  for (let li = 0; li < lines.length; li++) {
-    const lineWords = lines[li].text.trim().split(/\s+/).filter(Boolean);
-    if (!lineWords.length) continue;
+const plP = {
+  squashX: 1, squashY: 1, targetSX: 1, targetSY: 1,
+  lean: 0, idleT: 0, landT: 0,
+  mono: 0, casl: 0.1, wght: 500, slnt: 0, crsv: 0,
+};
 
-    // Justified spacing (except last line)
-    const totalWW = lineWords.reduce((s, w) => s + mw(w), 0);
-    const sp = (li < lines.length - 1 && lineWords.length > 1)
-      ? (colW - totalWW) / (lineWords.length - 1)
-      : spW;
-
-    let xOff = 0;
-    for (const w of lineWords) {
-      const ww  = mw(w);
-      const bx  = colX + xOff;
-      const by  = li * LH;
-
-      const el = document.createElement('span');
-      el.className = 'word';
-      el.textContent = w;
-      el.style.left = bx + 'px';
-      el.style.top  = by + 'px';
-      colsEl.appendChild(el);
-
-      words.push({
-        el, w: ww, bx, by,
-        x: bx, y: by,
-        vx: 0, vy: 0,
-        mono: 0, casl: 0, wght: 400, slnt: 0, crsv: 0,
-        prox: 0,
-      });
-      xOff += ww + sp;
-    }
+// ── Input ───────────────────────────────────────────
+const keys = {};
+addEventListener('keydown', e => {
+  if (state === 'title') {
+    state = 'playing';
+    document.getElementById('title-overlay').classList.add('out');
+    hudEl.classList.add('show');
+    return;
   }
-}
-
-// Staggered entrance
-words.forEach((w, i) => {
-  setTimeout(() => w.el.classList.add('vis'), 200 + i * 6);
+  keys[e.code] = true;
+  if (['ArrowUp','Space','KeyW'].includes(e.code)) pl.jbuf = 8;
+  e.preventDefault();
 });
+addEventListener('keyup', e => { keys[e.code] = false; });
 
-// ── Particle systems ────────────────────────────────────────────────────────
-const trail   = [];
-const ambient = [];
-const MAX_TRAIL = 350;
+// ── Particles ───────────────────────────────────────
+const parts = [];
+const bgParts = [];
+const MAXP = 700;
 
-for (let i = 0; i < 60; i++) {
-  ambient.push({
-    x: Math.random() * innerWidth,
-    y: Math.random() * innerHeight,
-    vx: (Math.random() - 0.5) * 0.3,
-    vy: (Math.random() - 0.5) * 0.2 - 0.08,
-    size: Math.random() * 1.5 + 0.5,
-    alpha: Math.random() * 0.1 + 0.02,
+for (let i = 0; i < 90; i++) {
+  bgParts.push({
+    x: Math.random()*12000-1000, y: Math.random()*900-100,
+    vx: (Math.random()-.5)*.12, vy: (Math.random()-.5)*.08,
+    sz: Math.random()*1.4+.3, a: Math.random()*.05+.01,
   });
 }
 
-function emitTrail() {
-  if (mouse.x < 0) return;
-  const vx = mouse.x - mouse.px;
-  const vy = mouse.y - mouse.py;
-  const speed = Math.sqrt(vx * vx + vy * vy);
-  const count = Math.min(Math.floor(speed * 0.4) + 2, 8);
-
-  for (let i = 0; i < count; i++) {
-    if (trail.length >= MAX_TRAIL) trail.shift();
-    trail.push({
-      x: mouse.x + (Math.random() - 0.5) * 10,
-      y: mouse.y + (Math.random() - 0.5) * 10,
-      vx: vx * 0.15 + (Math.random() - 0.5) * 3,
-      vy: vy * 0.15 + (Math.random() - 0.5) * 3,
-      life: 1,
-      size: Math.random() * 2.5 + 0.8,
+function emit(wx, wy, n, spread, spd, life, szr, col) {
+  for (let i = 0; i < n; i++) {
+    if (parts.length >= MAXP) parts.shift();
+    const ang = Math.random()*Math.PI*2;
+    const s = (.5+Math.random()*.5)*spd;
+    parts.push({
+      x: wx+(Math.random()-.5)*spread, y: wy+(Math.random()-.5)*spread,
+      vx: Math.cos(ang)*s, vy: Math.sin(ang)*s,
+      life: life*(.7+Math.random()*.6), ml: life,
+      sz: szr[0]+Math.random()*(szr[1]-szr[0]),
+      c: col,
     });
   }
 }
-
-// ── Container offset (cached) ───────────────────────────────────────────────
-let cLeft, cTop;
-function updateColsRect() {
-  const r = colsEl.getBoundingClientRect();
-  cLeft = r.left;
-  cTop  = r.top;
+function emitLand(wx, wy) { emit(wx, wy, 30, 24, 4.5, .9, [1.2, 3.5]); }
+function emitJump(wx, wy) { emit(wx, wy+PH, 15, 10, 3.5, .6, [.8, 2.2]); }
+function emitAct(wx, wy, ww) { emit(wx+ww/2, wy, 40, ww*1.2, 5.5, 1.4, [1.5, 4]); }
+function emitTrail() {
+  if (parts.length >= MAXP) return;
+  parts.push({
+    x: pl.x+PW/2+(Math.random()-.5)*4,
+    y: pl.y+PH*.3+(Math.random()-.5)*12,
+    vx: -pl.vx*.08+(Math.random()-.5)*.4,
+    vy: (Math.random()-.5)*.4,
+    life: .5, ml: .5, sz: Math.random()*1.2+.4,
+  });
 }
-updateColsRect();
-addEventListener('resize', updateColsRect);
 
-// ── Header refs ─────────────────────────────────────────────────────────────
-const hdrK = document.getElementById('hdr-k');
-const hdrT = document.getElementById('hdr-t');
-let hdrTime = 0;
+// ── Collectible Glyphs ─────────────────────────────
+function spawnGlyph() {
+  const ch = GCHARS[Math.floor(Math.random()*GCHARS.length)];
+  // Mostly big, occasionally giant
+  const roll = Math.random();
+  const sz = roll < .15 ? 80 + Math.random()*40    // 15% giant (80-120px)
+           : roll < .45 ? 50 + Math.random()*30     // 30% large (50-80px)
+           : 32 + Math.random()*22;                  // 55% medium (32-54px)
+  const col = GCOLS[Math.floor(Math.random()*GCOLS.length)];
+  const feat = GFEATS[Math.floor(Math.random()*GFEATS.length)];
+  const el = document.createElement('span');
+  el.className = 'col';
+  el.textContent = ch;
+  el.style.fontSize = sz + 'px';
+  el.style.color = `rgba(${col.r},${col.g},${col.b},0.85)`;
+  el.style.fontFeatureSettings = `'${feat}' 1`;
+  el.style.textShadow = `0 0 8px rgba(${col.r},${col.g},${col.b},0.4),0 0 22px rgba(${col.r},${col.g},${col.b},0.12)`;
+  el.style.fontVariationSettings =
+    `'MONO' ${Math.random()>.5?1:0},'CASL' ${(.5+Math.random()*.5).toFixed(2)},'wght' ${Math.round(500+Math.random()*500)},'slnt' ${(-Math.random()*15).toFixed(1)},'CRSV' ${Math.random()>.4?1:0}`;
+  worldEl.appendChild(el);
+  return {
+    el, sz, col,
+    x: cam.x + 80 + Math.random()*(W()-160),
+    y: cam.y - 60 - Math.random()*180,
+    vy: .5 + Math.random()*1.1,
+    vx: (Math.random()-.5)*.4,
+    rot: Math.random()*360,
+    rSpd: (Math.random()-.5)*3.5,
+    pts: Math.round(sz/4)*5,
+  };
+}
 
-// ── Animation loop ──────────────────────────────────────────────────────────
-function tick() {
+function updateGlyphs() {
+  glyphTimer++;
+  if (glyphTimer > 25 + Math.random()*20) {
+    glyphTimer = 0;
+    if (glyphs.length < 25) glyphs.push(spawnGlyph());
+  }
+  const pcx = pl.x+PW/2, pcy = pl.y+PH/2;
+
+  for (let i = glyphs.length-1; i >= 0; i--) {
+    const g = glyphs[i];
+    g.y += g.vy;
+    g.x += g.vx;
+    g.rot += g.rSpd;
+
+    // Remove if below screen
+    if (g.y > cam.y + H() + 120) {
+      g.el.remove(); glyphs.splice(i,1); continue;
+    }
+
+    // Collision with player (generous)
+    const dx = (g.x+g.sz/2)-pcx, dy = (g.y+g.sz/2)-pcy;
+    const dist = Math.sqrt(dx*dx+dy*dy);
+    if (dist < g.sz/2 + 24) {
+      score += g.pts;
+      // Velocity boost — stacks with each glyph eaten
+      pl.boost = Math.min(pl.boost + .35, 3.5);
+      const dir = pl.vx >= 0 ? 1 : -1;
+      pl.vx += dir * (1.5 + pl.boost * .4);
+      pl.vy -= 1.8 + pl.boost * .3;  // upward pop
+      // Big colored burst
+      emit(g.x+g.sz/2, g.y+g.sz/2, 30, 18, 5.5, 1.1, [1.5, 4], g.col);
+      // White sparkle center
+      emit(g.x+g.sz/2, g.y+g.sz/2, 8, 6, 3, .6, [.5, 1.5], {r:255,g:255,b:255});
+      scoreEl.classList.remove('bump');
+      void scoreEl.offsetWidth; // reflow to restart animation
+      scoreEl.classList.add('bump');
+      setTimeout(() => scoreEl.classList.remove('bump'), 130);
+      g.el.remove(); glyphs.splice(i,1); continue;
+    }
+
+    // Render
+    const sx = g.x-cam.x, sy = g.y-cam.y;
+    if (sx < -80 || sx > W()+80) { g.el.style.display='none'; continue; }
+    g.el.style.display = '';
+    g.el.style.transform = `translate(${sx.toFixed(1)}px,${sy.toFixed(1)}px) rotate(${g.rot.toFixed(1)}deg)`;
+  }
+
+  // Rolling score display
+  dScore += (score - dScore) * .12;
+  if (Math.abs(score-dScore) < 1) dScore = score;
+  scoreEl.textContent = Math.round(dScore);
+}
+
+// ── Reflow Passages ────────────────────────────────
+function updatePassages() {
+  for (const p of passages) {
+    const pcx = pl.x + PW / 2;
+    // Column narrows as player passes through horizontally
+    const relX = pcx - p.x;
+    const progress = Math.max(0, Math.min(1, relX / p.maxW));
+    const prox = Math.max(0, 1 - Math.abs((p.x + p.maxW / 2) - pcx) / 700);
+    const targetW = p.maxW * (1 - progress * 0.55);
+    p.currentW += (targetW - p.currentW) * 0.06;
+
+    // Only re-layout when width actually changes
+    const newW = Math.round(p.currentW);
+    if (newW !== p.lastW) {
+      p.lastW = newW;
+      const { lines } = layoutWithLines(p.prepared, Math.max(80, newW), PLH);
+      p.cachedLines = lines;
+
+      // Sync line elements
+      while (p.lineEls.length > lines.length) p.lineEls.pop().remove();
+      while (p.lineEls.length < lines.length) {
+        const el = document.createElement('div');
+        el.className = 'passage-line';
+        worldEl.appendChild(el);
+        p.lineEls.push(el);
+      }
+      for (let i = 0; i < lines.length; i++) {
+        p.lineEls[i].textContent = lines[i].text;
+      }
+    }
+
+    // Position and style
+    const sx = p.x - cam.x;
+    const baseY = p.y - cam.y;
+    if (sx < -500 || sx > W() + 200) {
+      for (const el of p.lineEls) el.style.display = 'none';
+      p.edge.style.display = 'none';
+      continue;
+    }
+
+    // Font variation & color based on proximity
+    const a = prox;
+    const wght = Math.round(350 + a * 250);
+    const casl = (a * 0.6).toFixed(2);
+    const vs = `'MONO' 0,'CASL' ${casl},'wght' ${wght},'slnt' 0,'CRSV' 0`;
+    const r = Math.round(34 + a * 180);
+    const g = Math.round(34 + a * 60);
+    const b = Math.round(34 + a * 20);
+    const glow = a > 0.2
+      ? `0 0 ${(a * 12).toFixed(0)}px rgba(255,107,53,${(a * 0.2).toFixed(2)})`
+      : 'none';
+
+    for (let i = 0; i < p.lineEls.length; i++) {
+      const el = p.lineEls[i];
+      el.style.display = '';
+      el.style.transform = `translate(${sx.toFixed(1)}px,${(baseY + i * PLH).toFixed(1)}px)`;
+      el.style.fontVariationSettings = vs;
+      el.style.color = `rgb(${r},${g},${b})`;
+      el.style.textShadow = glow;
+    }
+
+    // Column edge indicator
+    const edgeX = sx + p.currentW;
+    const edgeH = p.cachedLines.length * PLH;
+    p.edge.style.display = a > 0.05 ? '' : 'none';
+    p.edge.style.transform = `translate(${edgeX.toFixed(1)}px,${baseY.toFixed(1)}px)`;
+    p.edge.style.height = edgeH + 'px';
+    p.edge.style.background = `rgba(255,107,53,${(a * 0.12).toFixed(3)})`;
+  }
+}
+
+// ── Player Glyph ───────────────────────────────────
+function updatePlayerGlyph() {
+  const spd = Math.abs(pl.vx);
+  const airborne = !pl.ground;
+  const moving = spd > 0.5;
+
+  // Font axis targets based on movement state
+  let tCasl = 0.1, tWght = 480, tSlnt = 0, tMono = 0, tCrsv = 0;
+
+  if (moving) {
+    tCasl = Math.min(1, 0.2 + spd / SPD * 0.7);
+    tWght = 550 + (spd / SPD) * 350;
+    tSlnt = Math.max(-15, Math.min(15, -pl.vx * 2.5));
+    tCrsv = 0.4;
+  }
+  if (airborne) {
+    tCasl = Math.max(tCasl, 0.5);
+    tMono = 0.5;
+    tCrsv = 0.7;
+    if (pl.vy < 0) tWght = Math.max(tWght, 700);
+  }
+  if (pl.boost > 0.3) {
+    tCasl = Math.min(1, tCasl + pl.boost * 0.2);
+    tWght = Math.min(1000, tWght + pl.boost * 120);
+    tCrsv = Math.min(1, tCrsv + 0.2);
+  }
+
+  // Idle: gentle curiosity
+  if (!moving && !airborne) {
+    plP.idleT += 0.03;
+    tSlnt = Math.sin(plP.idleT * 0.7) * 5;
+    tCasl = 0.15 + Math.sin(plP.idleT * 0.5) * 0.1;
+    tWght = 480 + Math.sin(plP.idleT * 0.3) * 40;
+  } else {
+    plP.idleT = 0;
+  }
+
+  // Smooth interpolation
+  plP.casl += (tCasl - plP.casl) * 0.13;
+  plP.wght += (tWght - plP.wght) * 0.1;
+  plP.slnt += (tSlnt - plP.slnt) * 0.15;
+  plP.mono += (tMono - plP.mono) * 0.08;
+  plP.crsv += (tCrsv - plP.crsv) * 0.1;
+
+  // Squash & stretch
+  if (plP.landT > 0) {
+    plP.landT--;
+    const t = plP.landT / 8;
+    plP.targetSX = 1 + 0.35 * t;
+    plP.targetSY = 1 - 0.3 * t;
+  } else if (airborne && pl.vy < -4) {
+    plP.targetSX = 0.78; plP.targetSY = 1.28;
+  } else if (airborne && pl.vy > 4) {
+    plP.targetSX = 0.88; plP.targetSY = 1.15;
+  } else {
+    plP.targetSX = 1; plP.targetSY = 1;
+  }
+  plP.squashX += (plP.targetSX - plP.squashX) * 0.22;
+  plP.squashY += (plP.targetSY - plP.squashY) * 0.22;
+
+  // Lean into movement
+  plP.lean += (pl.vx * 2 - plP.lean) * 0.1;
+
+  // Idle breathing
+  const breathe = (!moving && !airborne) ? Math.sin(plP.idleT * 1.2) * 0.02 : 0;
+
+  // Color shifts toward gold when fast/boosted
+  const intensity = Math.min(1, spd / SPD + pl.boost * 0.3);
+  const cg = Math.round(107 + intensity * 103);
+  const cb = Math.round(53 + intensity * 100);
+
+  // Position centered on collision box
+  const sx = pl.x + PW / 2 - cam.x;
+  const sy = pl.y + PH / 2 - cam.y;
+
+  plEl.style.fontVariationSettings =
+    `'MONO' ${plP.mono.toFixed(2)},'CASL' ${plP.casl.toFixed(2)},'wght' ${Math.round(plP.wght)},'slnt' ${plP.slnt.toFixed(1)},'CRSV' ${plP.crsv.toFixed(2)}`;
+  plEl.style.transform =
+    `translate(${sx.toFixed(1)}px,${sy.toFixed(1)}px) translate(-50%,-50%) rotate(${plP.lean.toFixed(1)}deg) scale(${(plP.squashX + breathe).toFixed(3)},${(plP.squashY + breathe).toFixed(3)})`;
+  plEl.style.color = `rgb(255,${cg},${cb})`;
+
+  const ga = 0.4 + intensity * 0.4;
+  const gr = 8 + intensity * 15;
+  const gr2 = 20 + intensity * 30;
+  plEl.style.textShadow =
+    `0 0 ${gr.toFixed(0)}px rgba(255,${Math.round(150 + intensity * 55)},${Math.round(50 + intensity * 100)},${ga.toFixed(2)}),` +
+    `0 0 ${gr2.toFixed(0)}px rgba(255,107,53,${(ga * 0.3).toFixed(2)})`;
+}
+
+// ── Player Physics ──────────────────────────────────
+function updatePlayer() {
+  const acc = pl.ground ? .9 : .42;
+  const fri = pl.ground ? .82 : .94;
+  if (keys.ArrowLeft || keys.KeyA) pl.vx -= acc;
+  if (keys.ArrowRight || keys.KeyD) pl.vx += acc;
+  pl.vx *= fri;
+  const spdCap = SPD + pl.boost * 2.5;
+  pl.vx = Math.max(-spdCap, Math.min(spdCap, pl.vx));
+  if (Math.abs(pl.vx) < .08) pl.vx = 0;
+  pl.boost *= .992; // slow decay
+  if (pl.boost < .01) pl.boost = 0;
+
+  if (pl.ground) { pl.coyote = 8; pl.jcount = 0; }
+  else pl.coyote = Math.max(0, pl.coyote-1);
+
+  if (pl.jbuf > 0 && (pl.coyote > 0 || pl.jcount < MAXJUMPS)) {
+    pl.vy = JUMP;
+    pl.ground = false;
+    pl.coyote = 0;
+    pl.jbuf = 0;
+    pl.jcount++;
+    emitJump(pl.x, pl.y);
+  }
+  pl.jbuf = Math.max(0, pl.jbuf-1);
+
+  // Variable jump height
+  if (!(keys.ArrowUp||keys.Space||keys.KeyW) && pl.vy < -3) pl.vy *= .82;
+
+  pl.vy += G;
+  pl.vy = Math.min(pl.vy, MAXFALL + pl.boost);
+
+  const prevY = pl.y;
+  pl.x += pl.vx;
+  pl.y += pl.vy;
+
+  // Collision
+  pl.ground = false;
+  for (const w of words) {
+    const pb = pl.y + PH;
+    const pvb = prevY + PH;
+    if (pl.x+PW > w.x+4 && pl.x < w.x+w.w-4) {
+      if (pvb <= w.y+3 && pb >= w.y && pl.vy >= 0) {
+        pl.y = w.y - PH;
+        pl.vy = 0;
+        pl.ground = true;
+        pl.jcount = 0;
+        if (pvb < w.y - 1) { emitLand(pl.x+PW/2, w.y); plP.landT = 8; }
+        pl.lastPlat = w;
+      }
+    }
+  }
+
+  // Safety net
+  if (pl.y > 780) {
+    if (pl.lastPlat) {
+      pl.x = pl.lastPlat.x + pl.lastPlat.w/2;
+      pl.y = pl.lastPlat.y - PH - 60;
+    } else { pl.x = 210; pl.y = 400; }
+    pl.vy = 0; pl.vx = 0;
+    emit(pl.x, pl.y+PH, 35, 30, 3, 1, [1, 3]);
+  }
+
+  pl.trail.unshift({x:pl.x, y:pl.y});
+  const maxTrail = 10 + Math.floor(pl.boost * 5);
+  if (pl.trail.length > maxTrail) pl.trail.pop();
+  if (Math.abs(pl.vx) > .8 || Math.abs(pl.vy) > .8) {
+    emitTrail();
+    if (pl.boost > .5) emitTrail(); // double particles when boosted
+  }
+}
+
+// ── Camera ──────────────────────────────────────────
+function updateCam() {
+  cam.x += (pl.x - W()*.35 - cam.x) * .07;
+  cam.y += (pl.y - H()*.5 - cam.y) * .05;
+  cam.y = Math.max(-150, Math.min(250, cam.y));
+  cam.x = Math.max(-200, cam.x);
+}
+
+// ── Word Activation ─────────────────────────────────
+function updateWords() {
+  const px = pl.x + PW/2, py = pl.y + PH/2;
+  const auraPulse = AURA * (1 + Math.sin(gt*.06)*.08);
+
+  for (const w of allW) {
+    if (!w.plat) w.y = w.baseY + Math.sin(gt*.015 + w.ph)*18;
+
+    const cx = w.x + w.w/2, cy = w.y + PLATH/2;
+    const dx = cx-px, dy = cy-py;
+    const dist = Math.sqrt(dx*dx + dy*dy);
+    const prox = Math.max(0, 1 - dist/auraPulse);
+
+    if (prox > .35 && !w.act) { w.act = true; emitAct(w.x, w.y, w.w); }
+
+    const base = w.act ? .3 : 0;
+    const target = Math.max(base, prox);
+    w.al += (target - w.al) * .1;
+    const a = w.al;
+
+    w.wght += (300 + a*700 - w.wght) * .12;
+    w.casl += (a - w.casl) * .12;
+    w.mono += (a*.8 - w.mono) * .12;
+    w.slnt += (-a*13 - w.slnt) * .12;
+    w.crsv += (a*.7 - w.crsv) * .12;
+
+    const sx = w.x - cam.x, sy = w.y - cam.y;
+    if (sx < -250 || sx > W()+250 || sy < -250 || sy > H()+250) {
+      w.el.style.display = 'none'; continue;
+    }
+    w.el.style.display = '';
+
+    const sc = 1 + a*.18;
+    w.el.style.transform = `translate(${sx.toFixed(1)}px,${sy.toFixed(1)}px) scale(${sc.toFixed(3)})`;
+    w.el.style.fontVariationSettings =
+      `'MONO' ${w.mono.toFixed(2)},'CASL' ${w.casl.toFixed(2)},'wght' ${Math.round(w.wght)},'slnt' ${w.slnt.toFixed(1)},'CRSV' ${w.crsv.toFixed(2)}`;
+
+    const r = Math.round(42 + a*(255-42));
+    const g = Math.round(42 + a*(107-42));
+    const b = Math.round(42 + a*(53-42));
+    w.el.style.color = `rgb(${r},${g},${b})`;
+
+    if (a > .12) {
+      const ga = (a-.12)/.88;
+      w.el.style.textShadow =
+        `0 0 ${(3+a*10).toFixed(0)}px rgba(255,107,53,${(ga*.65).toFixed(2)}),`+
+        `0 0 ${(10+a*28).toFixed(0)}px rgba(255,107,53,${(ga*.25).toFixed(2)}),`+
+        `0 0 ${(22+a*50).toFixed(0)}px rgba(255,60,20,${(ga*.1).toFixed(2)})`;
+    } else {
+      w.el.style.textShadow = 'none';
+    }
+  }
+}
+
+// ── Canvas Render ───────────────────────────────────
+function render() {
   ctx.clearRect(0, 0, cvs.width, cvs.height);
 
-  // ── Ambient particles ───────────────────────
-  for (const p of ambient) {
-    p.x += p.vx;
-    p.y += p.vy;
-    if (p.x < -20) p.x = innerWidth + 20;
-    if (p.x > innerWidth + 20) p.x = -20;
-    if (p.y < -20) p.y = innerHeight + 20;
-    if (p.y > innerHeight + 20) p.y = -20;
-
+  // Background particles (parallax)
+  for (const p of bgParts) {
+    p.x += p.vx; p.y += p.vy;
+    const sx = p.x - cam.x*.25, sy = p.y - cam.y*.25;
+    if (sx < -20 || sx > W()+20 || sy < -20 || sy > H()+20) continue;
     ctx.beginPath();
-    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(255,107,53,${p.alpha})`;
+    ctx.arc(sx, sy, p.sz, 0, Math.PI*2);
+    ctx.fillStyle = `rgba(255,107,53,${p.a})`;
     ctx.fill();
   }
 
-  // ── Trail particles ─────────────────────────
-  emitTrail();
-  for (let i = trail.length - 1; i >= 0; i--) {
-    const p = trail[i];
-    p.x += p.vx;
-    p.y += p.vy;
-    p.vx *= 0.97;
-    p.vy *= 0.97;
-    p.vy += 0.02;
-    p.life -= 0.016;
-
-    if (p.life <= 0) { trail.splice(i, 1); continue; }
-
-    const a = p.life;
-    // Core
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, p.size * a, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(255,107,53,${(a * 0.55).toFixed(3)})`;
-    ctx.fill();
-    // Glow
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, p.size * a * 4, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(255,107,53,${(a * 0.07).toFixed(3)})`;
-    ctx.fill();
-  }
-
-  // ── Cursor glow ─────────────────────────────
-  if (mouse.x > 0) {
-    const g = ctx.createRadialGradient(mouse.x, mouse.y, 0, mouse.x, mouse.y, REP_R);
-    g.addColorStop(0, 'rgba(255,107,53,0.18)');
-    g.addColorStop(0.4, 'rgba(255,107,53,0.06)');
-    g.addColorStop(1, 'rgba(255,107,53,0)');
-    ctx.fillStyle = g;
-    ctx.beginPath();
-    ctx.arc(mouse.x, mouse.y, REP_R, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Bright center dot
-    ctx.beginPath();
-    ctx.arc(mouse.x, mouse.y, 3, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(255,150,90,0.7)';
-    ctx.fill();
-  }
-
-  // ── Word physics ────────────────────────────
-  for (const word of words) {
-    const wcx = cLeft + word.x + word.w / 2;
-    const wcy = cTop + word.y + LH / 2;
-    const dx  = wcx - mouse.x;
-    const dy  = wcy - mouse.y;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-
-    // Repulsion (smooth quadratic falloff)
-    if (dist < REP_R && dist > 1) {
-      const t = 1 - dist / REP_R;
-      const f = 18 * t * t;
-      word.vx += (dx / dist) * f;
-      word.vy += (dy / dist) * f;
-    }
-
-    // Spring back
-    word.vx += (word.bx - word.x) * SPRING;
-    word.vy += (word.by - word.y) * SPRING;
-
-    // Damping
-    word.vx *= DAMP;
-    word.vy *= DAMP;
-
-    // Integrate
-    word.x += word.vx;
-    word.y += word.vy;
-
-    // Clamp displacement
-    const ddx  = word.x - word.bx;
-    const ddy  = word.y - word.by;
-    const disp = Math.sqrt(ddx * ddx + ddy * ddy);
-    if (disp > MAX_DISP) {
-      const s = MAX_DISP / disp;
-      word.x = word.bx + ddx * s;
-      word.y = word.by + ddy * s;
-      word.vx *= 0.5;
-      word.vy *= 0.5;
-    }
-
-    // Proximity 0–1
-    const prox = Math.max(0, 1 - dist / REP_R);
-
-    // Font variation targets — push axes HARD for dramatic effect
-    const tMono = prox;
-    const tCasl = prox;
-    const tWght = 300 + prox * 700;  // 300 → 1000 (full range)
-    const tSlnt = -prox * 15;
-    const tCrsv = prox;
-
-    // Smooth interpolation (faster response for snappier feel)
-    word.mono += (tMono - word.mono) * 0.12;
-    word.casl += (tCasl - word.casl) * 0.12;
-    word.wght += (tWght - word.wght) * 0.12;
-    word.slnt += (tSlnt - word.slnt) * 0.12;
-    word.crsv += (tCrsv - word.crsv) * 0.12;
-
-    // Transform
-    const tx  = word.x - word.bx;
-    const ty  = word.y - word.by;
-    const rot = disp > 2 ? Math.atan2(ty, tx) * (Math.min(disp, 80) / 80) * 4 : 0;
-    const sc  = 1 + prox * 0.18;  // up to 18% scale boost
-    word.el.style.transform =
-      `translate(${tx.toFixed(1)}px,${ty.toFixed(1)}px) rotate(${rot.toFixed(2)}deg) scale(${sc.toFixed(3)})`;
-
-    // Update expensive style props only when proximity changed
-    if (Math.abs(prox - word.prox) > 0.004 || prox > 0.01) {
-      word.el.style.fontVariationSettings =
-        `'MONO' ${word.mono.toFixed(2)},'CASL' ${word.casl.toFixed(2)},'wght' ${Math.round(word.wght)},'slnt' ${word.slnt.toFixed(1)},'CRSV' ${word.crsv.toFixed(2)}`;
-
-      // Color: #777 → #ff6b35
-      const r = Math.round(119 + prox * (255 - 119));
-      const g = Math.round(119 + prox * (107 - 119));
-      const b = Math.round(119 + prox * (53 - 119));
-      word.el.style.color = `rgb(${r},${g},${b})`;
-
-      // Glow — multi-layer for intense bloom
-      if (prox > 0.1) {
-        const ga = (prox - 0.1) / 0.9;
-        word.el.style.textShadow =
-          `0 0 ${(4 + prox * 12).toFixed(0)}px rgba(255,107,53,${(ga * 0.7).toFixed(2)}), 0 0 ${(10 + prox * 30).toFixed(0)}px rgba(255,107,53,${(ga * 0.3).toFixed(2)}), 0 0 ${(20 + prox * 50).toFixed(0)}px rgba(255,60,20,${(ga * 0.12).toFixed(2)})`;
-      } else if (word.prox > 0.1) {
-        word.el.style.textShadow = 'none';
-      }
-
-      word.prox = prox;
+  // Subtle grid near player
+  const gs = 50;
+  const gsx = Math.floor(cam.x/gs)*gs;
+  const gsy = Math.floor(cam.y/gs)*gs;
+  for (let gx = gsx; gx < cam.x+W()+gs; gx += gs) {
+    for (let gy = gsy; gy < cam.y+H()+gs; gy += gs) {
+      const dx = gx-pl.x, dy = gy-pl.y;
+      const d = Math.sqrt(dx*dx+dy*dy);
+      const fade = Math.max(0, 1-d/350);
+      if (fade < .01) continue;
+      ctx.globalAlpha = fade*.04;
+      ctx.fillStyle = '#ff6b35';
+      ctx.fillRect(gx-cam.x-1, gy-cam.y-1, 2, 2);
     }
   }
+  ctx.globalAlpha = 1;
 
-  // ── Header animation ───────────────────────
-  hdrTime += 0.015;
+  // Game particles
+  for (let i = parts.length-1; i >= 0; i--) {
+    const p = parts[i];
+    p.x += p.vx; p.y += p.vy;
+    p.vx *= .97; p.vy *= .97; p.vy += .012;
+    p.life -= .018;
+    if (p.life <= 0) { parts.splice(i,1); continue; }
+    const sx = p.x-cam.x, sy = p.y-cam.y;
+    if (sx < -30 || sx > W()+30 || sy < -30 || sy > H()+30) continue;
+    const a = p.life/p.ml;
+    const pc = p.c || {r:255,g:107,b:53};
+    ctx.beginPath();
+    ctx.arc(sx, sy, p.sz*a, 0, Math.PI*2);
+    ctx.fillStyle = `rgba(${pc.r},${pc.g},${pc.b},${(a*.6).toFixed(3)})`;
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(sx, sy, p.sz*a*4, 0, Math.PI*2);
+    ctx.fillStyle = `rgba(${pc.r},${pc.g},${pc.b},${(a*.07).toFixed(3)})`;
+    ctx.fill();
+  }
 
-  // "KINEMATIC" — subtle horizontal breathing
-  const kSc = 1 + Math.sin(hdrTime * 0.4) * 0.003;
-  hdrK.style.transform = `scaleX(${kSc.toFixed(4)})`;
+  // Player aura
+  const psx = pl.x+PW/2-cam.x, psy = pl.y+PH/2-cam.y;
+  const ap = 1+Math.sin(gt*.06)*.15;
+  const ar = AURA*ap;
+  const ag = ctx.createRadialGradient(psx,psy,0,psx,psy,ar);
+  ag.addColorStop(0,'rgba(255,107,53,0.09)');
+  ag.addColorStop(.35,'rgba(255,107,53,0.03)');
+  ag.addColorStop(1,'rgba(255,107,53,0)');
+  ctx.fillStyle = ag;
+  ctx.beginPath(); ctx.arc(psx,psy,ar,0,Math.PI*2); ctx.fill();
 
-  // "TYPOGRAPHY" — variable font axes breathe
-  const hCasl = 0.7 + Math.sin(hdrTime * 0.7) * 0.3;
-  const hWght = 750  + Math.sin(hdrTime * 0.5) * 150;
-  const hSlnt = -10  + Math.sin(hdrTime * 0.3) * 5;
-  const hMono = 0.1 + Math.sin(hdrTime * 0.9) * 0.1;
-  hdrT.style.fontVariationSettings =
-    `'MONO' ${hMono.toFixed(3)},'CASL' ${hCasl.toFixed(3)},'wght' ${Math.round(hWght)},'slnt' ${hSlnt.toFixed(1)},'CRSV' 1`;
+  // Player afterimage
+  for (let i = pl.trail.length-1; i >= 0; i--) {
+    const t = pl.trail[i];
+    const tsx = t.x-cam.x, tsy = t.y-cam.y;
+    const ta = (1-i/pl.trail.length)*.12;
+    ctx.fillStyle = `rgba(255,140,80,${ta})`;
+    const rr = PW/2;
+    ctx.beginPath();
+    ctx.roundRect(tsx, tsy, PW, PH, rr);
+    ctx.fill();
+  }
 
-  requestAnimationFrame(tick);
+  // Player glow (body is now the DOM glyph)
+  const pulse = .8+Math.sin(gt*.1)*.2;
+  const pg = ctx.createRadialGradient(psx,psy,0,psx,psy,40);
+  pg.addColorStop(0,`rgba(255,120,60,${.4*pulse})`);
+  pg.addColorStop(1,'rgba(255,120,60,0)');
+  ctx.fillStyle = pg;
+  ctx.beginPath(); ctx.arc(psx,psy,40,0,Math.PI*2); ctx.fill();
 }
 
+// ── End Check ───────────────────────────────────────
+function checkEnd() {
+  if (ended) return;
+  const last = words[words.length-1];
+  if (!last.act) return;
+  ended = true;
+  // Activate all remaining in a wave
+  for (const w of allW) {
+    if (!w.act) {
+      const delay = (w.x/10000)*2500;
+      setTimeout(() => { w.act = true; emitAct(w.x, w.y, w.w); }, delay);
+    }
+  }
+  setTimeout(() => {
+    document.getElementById('end-story').textContent = STORY;
+    document.getElementById('end-overlay').classList.add('show');
+  }, 3500);
+}
+
+// ── Title ───────────────────────────────────────────
+const tSub = document.getElementById('t-sub');
+function titleTick() {
+  tt += .02;
+  const c = .3+Math.sin(tt*.5)*.3;
+  const w = 400+Math.sin(tt*.3)*100;
+  tSub.style.fontVariationSettings =
+    `'MONO' 0,'CASL' ${c.toFixed(2)},'wght' ${Math.round(w)},'slnt' 0,'CRSV' 0`;
+
+  ctx.clearRect(0,0,cvs.width,cvs.height);
+  for (const p of bgParts) {
+    const sx = p.x*.08+W()*.5+Math.sin(tt+p.x*.008)*60;
+    const sy = p.y*.4+H()*.4+Math.cos(tt*.7+p.y*.01)*30;
+    ctx.beginPath(); ctx.arc(sx,sy,p.sz,0,Math.PI*2);
+    ctx.fillStyle = `rgba(255,107,53,${p.a*2.5})`;
+    ctx.fill();
+  }
+}
+
+// ── Main Loop ───────────────────────────────────────
+function tick() {
+  if (state === 'title') {
+    titleTick();
+  } else if (state === 'playing') {
+    gt++;
+    updatePlayer();
+    updateGlyphs();
+    updateCam();
+    updatePlayerGlyph();
+    updatePassages();
+    updateWords();
+    render();
+    checkEnd();
+  }
+  requestAnimationFrame(tick);
+}
 requestAnimationFrame(tick);
 </script>
 </body>
